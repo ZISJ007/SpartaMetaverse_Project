@@ -3,51 +3,51 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 
-// ºí·Ï ½×±â °ÔÀÓÀÇ ÇÙ½É ·ÎÁ÷À» ´ã´çÇÏ´Â Å¬·¡½º
+
 public class TheStack : MonoBehaviour
 {
     
-    private const float BoundSize = 3.5f;         // ºí·Ï ÃÖ´ë Å©±â
-    private const float MovingBoundsSize = 3f;    // ºí·Ï ÀÌµ¿ ¹üÀ§ ¹èÀ²
-    private const float StackMovingSpeed = 5.0f;  // ½ºÅÃ ÀÌµ¿ ¼Óµµ
-    private const float BlockMovingSpeed = 3.5f;  // ºí·Ï ÀÌµ¿ ¼Óµµ
-    private const float ErrorMargin = 0.1f;       // ºí·Ï ½×±â Çã¿ë ¿ÀÂ÷
+    private const float BoundSize = 3.5f;         // ë¸”ë¡ ìµœëŒ€ í¬ê¸°
+    private const float MovingBoundsSize = 3f;    // ë¸”ë¡ ì´ë™ ë²”ìœ„ ë°°ìœ¨
+    private const float StackMovingSpeed = 5.0f;  // ìŠ¤íƒ ì´ë™ ì†ë„
+    private const float BlockMovingSpeed = 3.5f;  // ë¸”ë¡ ì´ë™ ì†ë„
+    private const float ErrorMargin = 0.1f;       // ë¸”ë¡ ìŒ“ê¸° í—ˆìš© ì˜¤ì°¨
 
     
-    [Tooltip("½ºÅÃ¿¡ »ç¿ëÇÒ ¿øº» ºí·Ï ÇÁ¸®ÆÕ")] public GameObject originBlock = null;
+    [Tooltip("ìŠ¤íƒì— ì‚¬ìš©í•  ì›ë³¸ ë¸”ë¡ í”„ë¦¬íŒ¹")] public GameObject originBlock = null;
 
     
-    private Vector3 prevBlockPosition;           // ÀÌÀü ºí·ÏÀÇ À§Ä¡
-    private Vector3 desiredPosition;             // Ä«¸Ş¶ó ÀÌµ¿ ¸ñÇ¥ À§Ä¡
-    private Vector3 stackBounds = new Vector2(BoundSize, BoundSize);  // ÇöÀç ºí·Ï Å©±â (x, z)
+    private Vector3 prevBlockPosition;           // ì´ì „ ë¸”ë¡ì˜ ìœ„ì¹˜
+    private Vector3 desiredPosition;             // ì¹´ë©”ë¼ ì´ë™ ëª©í‘œ ìœ„ì¹˜
+    private Vector3 stackBounds = new Vector2(BoundSize, BoundSize);  // í˜„ì¬ ë¸”ë¡ í¬ê¸° (x, z)
 
-    Transform lastBlock = null;                  // ¸¶Áö¸·À¸·Î »ı¼ºµÈ ºí·Ï ÂüÁ¶
-    float blockTransition = 0f;                  // ºí·Ï ÀÌµ¿ ¾Ö´Ï¸ŞÀÌ¼Ç Å¸ÀÌ¸Ó
-    float secondaryPosition = 0f;                // º¸Á¶ ÃàÀÇ À§Ä¡ ÀúÀå°ª
+    Transform lastBlock = null;                  // ë§ˆì§€ë§‰ìœ¼ë¡œ ìƒì„±ëœ ë¸”ë¡ ì°¸ì¡°
+    float blockTransition = 0f;                  // ë¸”ë¡ ì´ë™ ì• ë‹ˆë©”ì´ì…˜ íƒ€ì´ë¨¸
+    float secondaryPosition = 0f;                // ë³´ì¡° ì¶•ì˜ ìœ„ì¹˜ ì €ì¥ê°’
 
-    int stackCount = -1;                         // ½×ÀÎ ºí·Ï ¼ö
+    int stackCount = -1;                         // ìŒ“ì¸ ë¸”ë¡ ìˆ˜
     public int Score { get { return stackCount; } }
-    int comboCount = 0;                          // ÇöÀç ÄŞº¸ ¼ö
+    int comboCount = 0;                         
     public int Combo { get { return comboCount; } }
 
-    private int maxCombo = 0;                    // ÃÖ°í ÄŞº¸ ¼ö
+    private int maxCombo = 0;                   
     public int MaxCombo { get => maxCombo; }
 
-    int bestScore = 0;                           // ÃÖ°í Á¡¼ö
+    int bestScore = 0;                          
     public int BestScore { get => bestScore; }
-    int bestCombo = 0;                           // ÃÖ°í ÄŞº¸
+    int bestCombo = 0;                           
     public int BestCombo { get => bestCombo; }
 
-    private const string BestScoreKey = "BestScore";  // PlayerPrefs Å°
+    private const string BestScoreKey = "BestScore";  
     private const string BestComboKey = "BestCombo";
 
-    bool isGameOver = true;                      // °ÔÀÓ ¿À¹ö »óÅÂ
+    bool isGameOver = true;                      
 
    
-    public Color preColor;                        // ÀÌÀü ºí·Ï »ö»ó
-    public Color nextColor;                       // ´ÙÀ½ ¸ñÇ¥ »ö»ó
+    public Color preColor;                        // ì´ì „ ë¸”ë¡ ìƒ‰ìƒ
+    public Color nextColor;                       // ë‹¤ìŒ ëª©í‘œ ìƒ‰ìƒ
 
-    bool isMovingX = true;                       // ÀÌµ¿ Ãà °áÁ¤ (XÃà or ZÃà)
+    bool isMovingX = true;                       // ì´ë™ ì¶• ê²°ì • (Xì¶• or Zì¶•)
 
   
     void Start()
@@ -57,15 +57,15 @@ public class TheStack : MonoBehaviour
             Debug.LogError("OriginBlock is NULL");
             return;
         }
-        // ÃÖ°í ±â·Ï ºÒ·¯¿À±â
+        // ìµœê³  ê¸°ë¡ ë¶ˆëŸ¬ì˜¤ê¸°
         bestScore = PlayerPrefs.GetInt(BestScoreKey, 0);
         bestCombo = PlayerPrefs.GetInt(BestComboKey, 0);
-        // ·£´ı »ö»ó ÃÊ±âÈ­
+        // ëœë¤ ìƒ‰ìƒ ì´ˆê¸°í™”
         preColor = GetRandomColor();
         nextColor = GetRandomColor();
-        prevBlockPosition = Vector3.down; // Ã¹ ºí·Ï À§Ä¡ ±âÁØ
+        prevBlockPosition = Vector3.down; // ì²« ë¸”ë¡ ìœ„ì¹˜ ê¸°ì¤€
 
-        // ½ÃÀÛÇÒ ¶§ µÎ °³ÀÇ ºí·Ï »ı¼º
+        // ì‹œì‘í•  ë•Œ ë‘ ê°œì˜ ë¸”ë¡ ìƒì„±
         Spawn_Block();
         Spawn_Block();
     }
@@ -73,14 +73,14 @@ public class TheStack : MonoBehaviour
 
     void Update()
     {
-        if (isGameOver) return; // °ÔÀÓ ¿À¹ö ½Ã ÀÛµ¿ ÁßÁö
+        if (isGameOver) return; // ê²Œì„ ì˜¤ë²„ ì‹œ ì‘ë™ ì¤‘ì§€
 
 
         if (Input.GetMouseButtonDown(0))
         {
             if (PlaceBlock())  
                 Spawn_Block();
-            else //°ÔÀÓ ¿À¹ö
+            else 
             {
                 Debug.Log("Game Over");
                 UpdateScore();
@@ -93,19 +93,19 @@ public class TheStack : MonoBehaviour
             }
         }
 
-        // ºí·Ï ÀÌµ¿ ¹× Ä«¸Ş¶ó ÀÌµ¿
+        
         MoveBlock();
         transform.position = Vector3.Lerp(transform.position, desiredPosition, StackMovingSpeed * Time.deltaTime);
     }
 
-    // ----------------------------- ºí·Ï »ı¼º -----------------------------
+    
     bool Spawn_Block()
     {
-        // ÀÌÀü ºí·Ï À§Ä¡ ÀúÀå
+        // ì´ì „ ë¸”ë¡ ìœ„ì¹˜ ì €ì¥
         if (lastBlock != null)
             prevBlockPosition = lastBlock.localPosition;
 
-        // »õ ºí·Ï ÀÎ½ºÅÏ½º »ı¼º
+        // ìƒˆ ë¸”ë¡ ì¸ìŠ¤í„´ìŠ¤ ìƒì„±
         GameObject newBlock = Instantiate(originBlock);
         if (newBlock == null)
         {
@@ -113,28 +113,28 @@ public class TheStack : MonoBehaviour
             return false;
         }
 
-        // »ö»ó Àû¿ë
+        // ìƒ‰ìƒ ì ìš©
         ColorChange(newBlock);
 
-        // °èÃş ¹× À§Ä¡ ¼³Á¤
+        // ê³„ì¸µ ë° ìœ„ì¹˜ ì„¤ì •
         Transform newTrans = newBlock.transform;
         newTrans.parent = this.transform;
         newTrans.localPosition = prevBlockPosition + Vector3.up;
         newTrans.localRotation = Quaternion.identity;
         newTrans.localScale = new Vector3(stackBounds.x, 1, stackBounds.y);
 
-        // Á¡¼ö ¹× »óÅÂ °»½Å
+        // ì ìˆ˜ ë° ìƒíƒœ ê°±ì‹ 
         stackCount++;
         desiredPosition = Vector3.down * stackCount;
         blockTransition = 0f;
         lastBlock = newTrans;
-        isMovingX = !isMovingX;               // ÀÌµ¿ Ãà ÀüÈ¯
+        isMovingX = !isMovingX;               // ì´ë™ ì¶• ì „í™˜
 
-        UiManager.Instance.UpdateScore();    // UI Á¡¼ö Ç¥½Ã ¾÷µ¥ÀÌÆ®
+        UiManager.Instance.UpdateScore();    // UI ì ìˆ˜ í‘œì‹œ ì—…ë°ì´íŠ¸
         return true;
     }
 
-    // ----------------------------- ·£´ı »ö»ó »ı¼º -----------------------------
+    
     Color GetRandomColor()
     {
         float r = Random.Range(100f, 250f) / 255f;
@@ -143,19 +143,19 @@ public class TheStack : MonoBehaviour
         return new Color(r, g, b);
     }
 
-    // ----------------------------- »ö»ó º¯°æ -----------------------------
+    
     void ColorChange(GameObject go)
     {
-        // ÀÌÀü »ö»ó°ú ´ÙÀ½ »ö»ó »çÀÌ º¸°£
+        // ì´ì „ ìƒ‰ìƒê³¼ ë‹¤ìŒ ìƒ‰ìƒ ì‚¬ì´ ë³´ê°„
         Color applyColor = Color.Lerp(preColor, nextColor, (stackCount % 11) / 10f);
         Renderer rn = go.GetComponent<Renderer>();
         if (rn == null) Debug.LogError("Renderer is null");
         rn.material.color = applyColor;
 
-        // ¹è°æ »ö»óµµ º¯°æ
+        // ë°°ê²½ ìƒ‰ìƒë„ ë³€ê²½
         Camera.main.backgroundColor = applyColor - new Color(0.1f, 0.1f, 0.1f);
 
-        // ¸ñÇ¥ »ö»ó µµ´Ş ½Ã ´ÙÀ½ »ö»ó °»½Å
+        // ëª©í‘œ ìƒ‰ìƒ ë„ë‹¬ ì‹œ ë‹¤ìŒ ìƒ‰ìƒ ê°±ì‹ 
         if (applyColor.Equals(nextColor))
         {
             preColor = nextColor;
@@ -163,7 +163,7 @@ public class TheStack : MonoBehaviour
         }
     }
 
-    // ----------------------------- ºí·Ï ÀÌµ¿ -----------------------------
+    
     void MoveBlock()
     {
         blockTransition += Time.deltaTime * BlockMovingSpeed;
@@ -175,28 +175,28 @@ public class TheStack : MonoBehaviour
             lastBlock.localPosition = new Vector3(secondaryPosition, stackCount, -movePos * MovingBoundsSize);
     }
 
-    // ----------------------------- ºí·Ï ³õ±â ÆÇ´Ü -----------------------------
+    
     bool PlaceBlock()
     {
         Vector3 lastPos = lastBlock.localPosition;
 
         if (isMovingX)
         {
-            // XÃà ±âÁØ Á¤·Ä
+            // Xì¶• ê¸°ì¤€ ì •ë ¬
             float deltaX = prevBlockPosition.x - lastPos.x;
             bool isNeg = deltaX < 0;
             deltaX = Mathf.Abs(deltaX);
 
             if (deltaX > ErrorMargin)
             {
-                // Àß¸° ºÎºĞ °è»ê ¹× ºí·Ï Å©±â Á¶Á¤
+                // ì˜ë¦° ë¶€ë¶„ ê³„ì‚° ë° ë¸”ë¡ í¬ê¸° ì¡°ì •
                 stackBounds.x -= deltaX;
                 if (stackBounds.x <= 0) return false;
                 float mid = (prevBlockPosition.x + lastPos.x) / 2;
                 lastBlock.localScale = new Vector3(stackBounds.x, 1, stackBounds.y);
                 lastBlock.localPosition = new Vector3(mid, lastPos.y, lastPos.z);
 
-                // Àß¸° ÀÜÇØ »ı¼º
+                // ì˜ë¦° ì”í•´ ìƒì„±
                 float rubbleHalf = deltaX / 2f;
                 CreateRubble(
                     new Vector3(
@@ -209,14 +209,14 @@ public class TheStack : MonoBehaviour
             }
             else
             {
-                // °ÅÀÇ Á¤·ÄµÈ °æ¿ì ÄŞº¸ Áõ°¡
+                // ê±°ì˜ ì •ë ¬ëœ ê²½ìš° ì½¤ë³´ ì¦ê°€
                 ComboCheck();
                 lastBlock.localPosition = prevBlockPosition + Vector3.up;
             }
         }
         else
         {
-            // ZÃà ±âÁØ Á¤·Ä (À§¿Í µ¿ÀÏ ·ÎÁ÷)
+            // Zì¶• ê¸°ì¤€ ì •ë ¬ (ìœ„ì™€ ë™ì¼ ë¡œì§)
             float deltaZ = prevBlockPosition.z - lastPos.z;
             bool isNeg = deltaZ < 0;
             deltaZ = Mathf.Abs(deltaZ);
@@ -246,7 +246,7 @@ public class TheStack : MonoBehaviour
             }
         }
 
-        // º¸Á¶ À§Ä¡ ÀúÀå ¹× ¼º°ø Ã³¸®
+        // ë³´ì¡° ìœ„ì¹˜ ì €ì¥ ë° ì„±ê³µ ì²˜ë¦¬
         secondaryPosition = isMovingX ? lastBlock.localPosition.x : lastBlock.localPosition.z;
         return true;
     }
@@ -257,7 +257,7 @@ public class TheStack : MonoBehaviour
         go.transform.localPosition = pos;
         go.transform.localScale = scale;
         go.transform.localRotation = Quaternion.identity;
-        go.AddComponent<Rigidbody>(); // ¹°¸® È¿°ú
+        go.AddComponent<Rigidbody>(); // ë¬¼ë¦¬ íš¨ê³¼
         go.name = "Rubble";
     }
 
@@ -267,7 +267,7 @@ public class TheStack : MonoBehaviour
         if (comboCount > maxCombo)
             maxCombo = comboCount;
 
-        // 5ÄŞº¸ ´Ş¼º ½Ã ºí·Ï Å©±â Áõ°¡
+        // 5ì½¤ë³´ ë‹¬ì„± ì‹œ ë¸”ë¡ í¬ê¸° ì¦ê°€
         if ((comboCount % 5) == 0)
         {
             Debug.Log("5Combo Success!");
@@ -281,7 +281,7 @@ public class TheStack : MonoBehaviour
     {
         if (bestScore < stackCount)
         {
-            Debug.Log("ÃÖ°í Á¡¼ö °»½Å");
+            Debug.Log("ìµœê³  ì ìˆ˜ ê°±ì‹ ");
             bestScore = stackCount;
             bestCombo = maxCombo;
             PlayerPrefs.SetInt(BestScoreKey, bestScore);
@@ -291,24 +291,24 @@ public class TheStack : MonoBehaviour
 
     void GameOverEffect()
     {
-        int childCount = transform.childCount;  // ÇöÀç ½ºÅÃ ³» ¸ğµç ºí·Ï(ÀÚ½Ä) °³¼ö¸¦ °¡Á®¿È
+        int childCount = transform.childCount;  // í˜„ì¬ ìŠ¤íƒ ë‚´ ëª¨ë“  ë¸”ë¡(ìì‹) ê°œìˆ˜ë¥¼ ê°€ì ¸ì˜´
 
-        // ÃÖ±Ù »ı¼ºµÈ 20°³ÀÇ ºí·Ï(¶Ç´Â ½ÇÁ¦ ÀÖ´Â ¼ö)¸¸ Ã³¸®
+        // ìµœê·¼ ìƒì„±ëœ 20ê°œì˜ ë¸”ë¡(ë˜ëŠ” ì‹¤ì œ ìˆëŠ” ìˆ˜)ë§Œ ì²˜ë¦¬
         for (int i = 1; i < 20 && childCount > i; i++)
         {
-            // µÚ¿¡¼­ i¹øÂ° ÀÚ½Ä(°¡Àå À§¿¡ ½×ÀÎ ºí·ÏµéºÎÅÍ Â÷·Ê´ë·Î)
+            // ë’¤ì—ì„œ ië²ˆì§¸ ìì‹(ê°€ì¥ ìœ„ì— ìŒ“ì¸ ë¸”ë¡ë“¤ë¶€í„° ì°¨ë¡€ëŒ€ë¡œ)
             GameObject go = transform.GetChild(childCount - i).gameObject;
 
-            // ÀÌ¹Ì ÀÜÇØ(Rubble)·Î Ç¥½ÃµÈ ºí·ÏÀº »ı·«
+            // ì´ë¯¸ ì”í•´(Rubble)ë¡œ í‘œì‹œëœ ë¸”ë¡ì€ ìƒëµ
             if (go.name.Equals("Rubble"))
                 continue;
 
-            // Rigidbody¸¦ Ãß°¡ÇÏ¿© ¹°¸® ¹ıÄ¢À» Àû¿ëÇÒ ÁØºñ
+            // Rigidbodyë¥¼ ì¶”ê°€í•˜ì—¬ ë¬¼ë¦¬ ë²•ì¹™ì„ ì ìš©í•  ì¤€ë¹„
             Rigidbody rb = go.AddComponent<Rigidbody>();
 
-            // À§ ¹æÇâÀ¸·Î Æ¢¾î ¿À¸£¸é¼­ ÁÂ¿ì·Î Èğ¾îÁöµµ·Ï ·£´ı ÈûÀ» °¡ÇÔ
-            // Vector3.up * Random.Range(100f,200f): À§·Î ÇâÇÏ´Â Èû
-            // Vector3.right * Random.Range(-200f,200f): ÁÂ¿ì Èğ¾îÁö´Â Èû
+            // ìœ„ ë°©í–¥ìœ¼ë¡œ íŠ€ì–´ ì˜¤ë¥´ë©´ì„œ ì¢Œìš°ë¡œ í©ì–´ì§€ë„ë¡ ëœë¤ í˜ì„ ê°€í•¨
+            // Vector3.up * Random.Range(100f,200f): ìœ„ë¡œ í–¥í•˜ëŠ” í˜
+            // Vector3.right * Random.Range(-200f,200f): ì¢Œìš° í©ì–´ì§€ëŠ” í˜
             Vector3 upForce = Vector3.up * Random.Range(300f, 400f);
             Vector3 horizontalForce = Vector3.right * Random.Range(-300f, 300f);
             rb.AddForce(upForce + horizontalForce);
@@ -317,12 +317,12 @@ public class TheStack : MonoBehaviour
 
     public void Restart()
     {
-        // ¸ğµç ÀÚ½Ä ¿ÀºêÁ§Æ® »èÁ¦
+        // ëª¨ë“  ìì‹ ì˜¤ë¸Œì íŠ¸ ì‚­ì œ
         int childCount = transform.childCount;
         for (int i = 0; i < childCount; i++)
             Destroy(transform.GetChild(i).gameObject);
 
-        // »óÅÂ ÃÊ±âÈ­
+        // ìƒíƒœ ì´ˆê¸°í™”
         isGameOver = false;
         lastBlock = null;
         desiredPosition = Vector3.zero;
@@ -337,7 +337,7 @@ public class TheStack : MonoBehaviour
         preColor = GetRandomColor();
         nextColor = GetRandomColor();
 
-        // ´Ù½Ã ºí·Ï »ı¼º
+        // ë‹¤ì‹œ ë¸”ë¡ ìƒì„±
         Spawn_Block();
         Spawn_Block();
     }
